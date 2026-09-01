@@ -1,0 +1,21 @@
+# exllamav3 dev built for sm_120 (RTX PRO 6000 Blackwell).
+# Base image already carries CUDA 13.0 devel (nvcc 13.0.88), torch 2.13.0+cu130 and Python 3.12,
+# so nothing has to be installed on the host and torch is never re-resolved.
+FROM lmsysorg/sglang:qwen38flashnext
+
+ENV TORCH_CUDA_ARCH_LIST=12.0
+ENV MAX_JOBS=8
+ENV CMAKE_BUILD_PARALLEL_LEVEL=8
+
+COPY exllamav3 /opt/exllamav3
+WORKDIR /opt/exllamav3
+
+# --no-build-isolation keeps the image's torch; installing deps first stops the wheel build
+# from resolving a different torch into an isolated env.
+RUN python3 -m pip install --no-cache-dir ninja packaging && \
+    python3 -m pip install --no-cache-dir \
+        tokenizers numpy rich typing_extensions safetensors pillow pyyaml \
+        marisa_trie pydantic "llguidance>=1.7.0" "flash-linear-attention>=0.5.0" && \
+    python3 -m pip install --no-cache-dir --no-build-isolation -v . 2>&1 | tail -40
+
+RUN python3 -c "import exllamav3, torch; print('exllamav3 OK', exllamav3.__file__); print('torch', torch.__version__)"

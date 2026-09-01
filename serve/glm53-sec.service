@@ -1,0 +1,18 @@
+[Unit]
+Description=GLM-5.3-Flash exl3 4.05bpw, OpenAI API on :8095 (security code review profile)
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/opt/glm53-sec/serve.sh
+ExecStop=-/usr/bin/docker stop --time 120 glm53-sec
+Restart=on-failure
+RestartSec=30
+TimeoutStartSec=2400
+TimeoutStopSec=180
+LimitMEMLOCK=infinity
+
+[Install]
+WantedBy=multi-user.target

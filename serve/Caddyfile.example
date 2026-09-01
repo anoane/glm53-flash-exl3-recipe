@@ -1,0 +1,17 @@
+# TLS + bearer token in front of the loopback server. The backend binds 127.0.0.1 only and
+# has no auth of its own, so this file is the entire security boundary -- do not expose the
+# backend port directly.
+#
+# flush_interval -1 is required: without it Caddy buffers the SSE stream and tokens arrive
+# in bursts at the end instead of incrementally.
+
+sec.example.com:8443 {
+    tls /etc/lego/certificates/_.example.com.crt /etc/lego/certificates/_.example.com.key
+
+    @unauth `{http.request.header.Authorization} != "Bearer REPLACE_WITH_YOUR_TOKEN"`
+    respond @unauth "Unauthorized" 401
+
+    reverse_proxy localhost:8095 {
+        flush_interval -1
+    }
+}
